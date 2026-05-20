@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.env
+
+# Model weights
+*.pth
+
+# Dataset (10k images — do not commit)
+data/
+
+# Test script download
+_sample.jpg
+
+# Jupyter
+*.ipynb_checkpoints/
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
