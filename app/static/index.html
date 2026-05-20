@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="/static/face-recognition.png" />
+  <title>Face Mask Detector</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #070a0f;
+      --bg2:       #0d1117;
+      --bg3:       #131920;
+      --border:    #1e2d3d;
+      --border2:   #2a3f54;
+      --neon:      #00ffe0;
+      --neon2:     #00b8ff;
+      --neon-dim:  rgba(0,255,224,0.12);
+      --neon-dim2: rgba(0,255,224,0.06);
+      --red:       #ff3b3b;
+      --red-dim:   rgba(255,59,59,0.12);
+      --amber:     #ffb800;
+      --amber-dim: rgba(255,184,0,0.12);
+      --text:      #e2eaf3;
+      --text2:     #6b8299;
+      --mono:      'Share Tech Mono', monospace;
+      --display:   'Syne', sans-serif;
+    }
+
+    body {
+      font-family: var(--display);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    /* header */
+    .hd { margin-bottom: 28px; }
+    .hd-tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--neon);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      opacity: 0.8;
+    }
+    .hd h1 {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.5px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .hd h1 span { color: var(--neon); }
+    .title-icon {
+      width: 38px;
+      height: 38px;
+      flex-shrink: 0;
+      filter: invert(1) sepia(1) saturate(5) hue-rotate(130deg);
+    }
+    .hd-sub {
+      margin-top: 8px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text2);
+      letter-spacing: 1px;
+    }
+
+    /* card */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 24px;
+    }
+
+    /* tabs */
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .tab {
+      padding: 9px 12px;
+      border: 1px solid var(--border2);
+      background: transparent;
+      color: var(--text2);
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.15s;
+      text-align: center;
+    }
+    .tab:hover { border-color: var(--neon); color: var(--neon); }
+    .tab.active {
+      border-color: var(--neon);
+      color: var(--neon);
+      background: var(--neon-dim);
+    }
+
+    /* upload box */
+    .drop {
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      background: var(--neon-dim2);
+      display: block;
+    }
+    .drop:hover, .drop.over {
+      border-color: var(--neon);
+      background: var(--neon-dim);
+    }
+    .drop-icon {
+      font-size: 28px;
+      margin-bottom: 10px;
+      color: var(--neon);
+      opacity: 0.6;
+      display: block;
+    }
+    .drop-text {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text2);
+      letter-spacing: 1px;
+      line-height: 1.7;
+    }
+    .drop-text span { color: var(--neon); }
+    input[type=file] { display: none; }
+
+    img#preview, img#cam-preview {
+      width: 100%;
+      max-height: 300px;
+      object-fit: cover;
+      border-radius: 2px;
+      margin-top: 12px;
+      border: 1px solid var(--border2);
+      display: none;
+    }
+
+    /* buttons */
+    .btn {
+      margin-top: 8px;
+      width: 100%;
+      padding: 13px;
+      background: transparent;
+      border: 1px solid var(--neon);
+      color: var(--neon);
+      font-family: var(--mono);
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: background 0.15s;
+    }
+    .btn:hover { background: var(--neon-dim); }
+    .btn:disabled {
+      border-color: var(--border2);
+      color: var(--text2);
+      cursor: not-allowed;
+      background: transparent;
+    }
+    .btn.secondary {
+      border-color: var(--border2);
+      color: var(--text2);
+    }
+    .btn.secondary:hover {
+      border-color: var(--text2);
+      color: var(--text);
+      background: transparent;
+    }
+
+    video#cam {
+      width: 100%;
+      max-height: 300px;
+      border-radius: 2px;
+      margin-top: 12px;
+      background: #000;
+      object-fit: cover;
+      border: 1px solid var(--border2);
+      display: block;
+    }
+
+    /* result panel */
+    #result {
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 2px;
+      display: none;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      position: relative;
+    }
+    #result.ok   { border-color: var(--neon);  background: var(--neon-dim2); }
+    #result.bad  { border-color: var(--red);   background: var(--red-dim); }
+    #result.warn { border-color: var(--amber); background: var(--amber-dim); }
+
+    #result.ok::before   { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--neon);  border-radius: 2px 2px 0 0; }
+    #result.bad::before  { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--red);   border-radius: 2px 2px 0 0; }
+    #result.warn::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--amber); border-radius: 2px 2px 0 0; }
+
+    .pred-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text2);
+      margin-bottom: 4px;
+    }
+    .pred-title {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+    #result.ok   .pred-title { color: var(--neon); }
+    #result.bad  .pred-title { color: var(--red); }
+    #result.warn .pred-title { color: var(--amber); }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .stat-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text2);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .stat-value {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .bar-track {
+      height: 4px;
+      background: var(--border);
+      border-radius: 0;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .bar-fill {
+      height: 100%;
+      background: var(--neon);
+      transition: width 0.4s cubic-bezier(.4,0,.2,1);
+    }
+    #result.bad  .bar-fill { background: var(--red); }
+    #result.warn .bar-fill { background: var(--amber); }
+
+    .action-box {
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      padding: 10px 14px;
+      margin-top: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0,0,0,0.2);
+    }
+    #result.ok  .action-box { border-color: rgba(0,255,224,0.3); }
+    #result.bad .action-box { border-color: rgba(255,59,59,0.3); }
+
+    .action-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text2);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .action-value {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+    #result.ok   .action-value { color: var(--neon); }
+    #result.bad  .action-value { color: var(--red); }
+    #result.warn .action-value { color: var(--amber); }
+
+    /* probability chips — now with mini bars */
+    .probs-row {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .prob-chip {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 8px 10px;
+    }
+    .prob-chip-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text2);
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    .prob-chip-val {
+      font-family: var(--mono);
+      font-size: 15px;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .prob-mini-track {
+      height: 3px;
+      background: var(--border);
+      border-radius: 0;
+      overflow: hidden;
+    }
+    .prob-mini-fill {
+      height: 100%;
+      background: var(--text2);
+      transition: width 0.5s cubic-bezier(.4,0,.2,1);
+    }
+    .prob-chip.is-pred .prob-chip-val { color: var(--neon); }
+    .prob-chip.is-pred .prob-mini-fill { background: var(--neon); }
+    #result.bad .prob-chip.is-pred .prob-chip-val  { color: var(--red); }
+    #result.bad .prob-chip.is-pred .prob-mini-fill { background: var(--red); }
+
+    /* inference time tag */
+    .infer-time {
+      margin-top: 10px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text2);
+      letter-spacing: 1px;
+      text-align: right;
+    }
+
+    /* footer */
+    .footer {
+      margin-top: 16px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text2);
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      letter-spacing: 1px;
+    }
+    .footer a {
+      color: var(--text2);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .footer a:hover { color: var(--neon); }
+
+    @keyframes borderPulse {
+      0%, 100% { box-shadow: none; }
+      50%       { box-shadow: 0 0 8px 2px rgba(0,255,224,0.15); }
+    }
+    .tab.active { animation: borderPulse 3s ease infinite; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="hd">
+      <div class="hd-tag">// system active</div>
+      <h1>
+        <img src="/static/face-recognition.png" alt="" class="title-icon" />
+        Face Mask Detector
+      </h1>
+      <div class="hd-sub">MobileNetV2 &nbsp;|&nbsp; Advanced ML </div>
+    </div>
+
+    <div class="card">
+      <div class="tabs">
+        <div class="tab active" data-mode="upload">Upload</div>
+        <div class="tab" data-mode="camera">Camera</div>
+      </div>
+
+      <div id="upload-pane">
+        <label class="drop" id="drop">
+          <input type="file" id="file" accept="image/*" />
+          <span class="drop-icon">&#8613;</span>
+          <div class="drop-text">
+            <span>click</span> to browse &nbsp;&middot;&nbsp; drag &amp; drop &nbsp;&middot;&nbsp; paste<br>
+            jpg &nbsp;/&nbsp; png &nbsp;/&nbsp; webp
+          </div>
+        </label>
+        <img id="preview" alt="preview" />
+        <button class="btn secondary" id="clear" style="display:none">Clear Image</button>
+        <button class="btn" id="send" disabled>Run Analysis</button>
+      </div>
+
+      <div id="camera-pane" style="display:none">
+        <video id="cam" autoplay playsinline></video>
+        <img id="cam-preview" alt="captured frame" />
+        <button class="btn secondary" id="clearcam" style="display:none">Clear Image</button>
+        <button class="btn" id="snap">Capture &amp; Analyze</button>
+        <button class="btn secondary" id="stopcam">Stop Camera</button>
+      </div>
+
+      <div id="result"></div>
+
+      <div class="footer">
+        <a href="/docs">/docs</a>
+        <a href="/health">/health</a>
+        <a href="/metrics">/metrics</a>
+      </div>
+    </div>
+  </div>
+
+<script>
+const $ = id => document.getElementById(id);
+let currentBlob = null, stream = null;
+
+function el(tag, props = {}, children = []) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === 'style') Object.assign(e.style, v);
+    else if (k === 'class') e.className = v;
+    else if (k === 'text') e.textContent = v;
+    else e.setAttribute(k, v);
+  }
+  children.forEach(c => e.appendChild(c));
+  return e;
+}
+
+function clearResult() {
+  $('result').style.display = 'none';
+  $('result').className = '';
+}
+
+// tab switching
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    const mode = t.dataset.mode;
+    $('upload-pane').style.display = mode === 'upload' ? 'block' : 'none';
+    $('camera-pane').style.display = mode === 'camera' ? 'block' : 'none';
+    clearResult();
+    if (mode === 'camera') startCam(); else stopCam();
+  });
+});
+
+// upload pane
+const drop = $('drop');
+$('file').addEventListener('change', e => useFile(e.target.files[0]));
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => {
+  e.preventDefault(); drop.classList.remove('over');
+  if (e.dataTransfer.files[0]) useFile(e.dataTransfer.files[0]);
+});
+window.addEventListener('paste', e => {
+  const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
+  if (item) useFile(item.getAsFile());
+});
+
+function useFile(f) {
+  if (!f) return;
+  currentBlob = f;
+  $('preview').src = URL.createObjectURL(f);
+  $('preview').style.display = 'block';
+  $('clear').style.display = 'block';
+  $('send').disabled = false;
+  clearResult();
+}
+
+$('clear').addEventListener('click', () => {
+  currentBlob = null;
+  $('preview').src = '';
+  $('preview').style.display = 'none';
+  $('clear').style.display = 'none';
+  $('send').disabled = true;
+  $('file').value = '';
+  clearResult();
+});
+
+$('send').addEventListener('click', () => predict(currentBlob));
+
+// camera pane
+async function startCam() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    $('cam').srcObject = stream;
+  } catch (err) { alert('Cannot open camera: ' + err.message); }
+}
+
+function stopCam() {
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+}
+
+$('stopcam').addEventListener('click', stopCam);
+
+$('clearcam').addEventListener('click', () => {
+  $('cam-preview').src = '';
+  $('cam-preview').style.display = 'none';
+  $('clearcam').style.display = 'none';
+  clearResult();
+});
+
+$('snap').addEventListener('click', () => {
+  const v = $('cam');
+  const sw = v.videoWidth, sh = v.videoHeight;
+  const side = Math.min(sw, sh);
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 480;
+  canvas.getContext('2d').drawImage(v, (sw-side)/2, (sh-side)/2, side, side, 0, 0, 480, 480);
+  $('cam-preview').src = canvas.toDataURL('image/jpeg', 0.92);
+  $('cam-preview').style.display = 'block';
+  $('clearcam').style.display = 'block';
+  canvas.toBlob(b => predict(b), 'image/jpeg', 0.92);
+});
+
+// prediction
+function setStatus(text, kind) {
+  const r = $('result');
+  r.className = 'result ' + (kind || 'warn');
+  r.style.display = 'block';
+  r.replaceChildren(
+    el('div', { class: 'pred-label', text: 'status' }),
+    el('div', { class: 'pred-title', text: text })
+  );
+}
+
+async function predict(blob) {
+  if (!blob) return;
+  setStatus('Analyzing...', 'warn');
+  const fd = new FormData();
+  fd.append('file', blob, 'image.jpg');
+  try {
+    const resp = await fetch('/predict', { method: 'POST', body: fd });
+    const data = await resp.json();
+    if (!resp.ok) { setStatus('Error: ' + (data.detail || resp.status), 'bad'); return; }
+    render(data);
+  } catch (err) { setStatus('Network error: ' + err.message, 'bad'); }
+}
+
+function render(d) {
+  const r = $('result');
+  const isMask  = d.predicted_class === 'WithMask';
+  const kind    = d.confidence < 0.6 ? 'warn' : (isMask ? 'ok' : 'bad');
+  r.className   = 'result ' + kind;
+  r.style.display = 'block';
+
+  const confPct = (d.confidence * 100).toFixed(1);
+
+  // main confidence bar
+  const barFill  = el('div', { class: 'bar-fill' });
+  barFill.style.width = '0%';
+  const barTrack = el('div', { class: 'bar-track' }, [barFill]);
+
+  // per-class probability chips with mini bars
+  const probChips = el('div', { class: 'probs-row' });
+  if (d.all_probs) {
+    for (const [c, p] of Object.entries(d.all_probs)) {
+      const isPred   = c === d.predicted_class;
+      const miniFill = el('div', { class: 'prob-mini-fill' });
+      miniFill.style.width = '0%';
+      const chip = el('div', { class: 'prob-chip' + (isPred ? ' is-pred' : '') }, [
+        el('div', { class: 'prob-chip-label', text: c }),
+        el('div', { class: 'prob-chip-val',   text: (p * 100).toFixed(1) + '%' }),
+        el('div', { class: 'prob-mini-track' }, [miniFill]),
+      ]);
+      probChips.appendChild(chip);
+      // animate after paint
+      setTimeout(() => { miniFill.style.width = (p * 100).toFixed(1) + '%'; }, 80);
+    }
+  }
+
+  // inference time
+  const inferTag = d.inference_ms != null
+    ? el('div', { class: 'infer-time', text: `inference: ${d.inference_ms} ms` })
+    : null;
+
+  const children = [
+    el('div', { class: 'pred-label', text: 'result' }),
+    el('div', { class: 'pred-title', text: d.predicted_class }),
+    el('div', { class: 'stat-row' }, [
+      el('span', { class: 'stat-label', text: 'Confidence' }),
+      el('span', { class: 'stat-value', text: confPct + '%' }),
+    ]),
+    barTrack,
+    el('div', { class: 'action-box' }, [
+      el('span', { class: 'action-label', text: 'Action' }),
+      el('span', { class: 'action-value', text: d.action }),
+    ]),
+    probChips,
+  ];
+  if (inferTag) children.push(inferTag);
+
+  r.replaceChildren(...children);
+  setTimeout(() => { barFill.style.width = confPct + '%'; }, 50);
+}
+</script>
+</body>
+</html>
